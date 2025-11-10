@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vote | MIT-WPU Election</title>
+  
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+  <style>
+    :root {
+      --mit-blue: #003366;
+      --mit-red: #C00000;
+      --mit-dark-blue: #002244;
+      --text-dark: #343a40;
+      --bg-light: #f8f9fa;
+    }
+
+    body {
+      background-color: var(--bg-light); 
+      font-family: 'Poppins', sans-serif;
+    }
+
+    /* --- Reusable Header --- */
+    .navbar {
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      background-color: #ffffff;
+    }
+    .navbar-brand img {
+      height: 40px; 
+      margin-right: 10px;
+    }
+    .navbar-brand {
+      font-weight: 600;
+      color: var(--mit-blue);
+    }
+    .nav-link {
+      font-weight: 500;
+      color: var(--mit-blue);
+    }
+    .nav-link:hover {
+      color: var(--mit-red);
+    }
+    .nav-link.active {
+      color: var(--mit-red);
+      font-weight: 600;
+    }
+    
+    /* --- Vote Page Specific (GUI FIX) --- */
+    .page-title {
+      color: var(--mit-blue);
+      font-weight: 600;
+    }
+    /* This card provides clean spacing and a shadow */
+    .form-card {
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.07);
+    }
+    .btn-main {
+      background: var(--mit-blue); 
+      color: white; 
+      font-weight: 600;
+      border: none;
+    }
+    .btn-main:hover {
+      background: var(--mit-dark-blue);
+      color: white;
+    }
+    
+    /* --- Candidate Card --- */
+    .candidate-card {
+      padding: 1.5rem;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      background: #fff;
+      transition: all 0.2s ease-in-out;
+      cursor: pointer;
+    }
+    .candidate-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 25px rgba(0, 51, 102, 0.15);
+      border-color: var(--mit-blue);
+    }
+    .candidate-icon {
+      font-size: 3rem; 
+      color: var(--mit-blue);
+    }
+    .candidate-name {
+      color: var(--mit-blue);
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+    .candidate-details {
+      font-size: 0.9rem;
+      color: #555;
+    }
+    /* NOTA Card Style */
+    .nota-card {
+      border-style: dashed;
+      border-color: #aaa;
+    }
+    .nota-card:hover {
+      border-color: var(--mit-red);
+      background: #fff8f8;
+      box-shadow: 0 8px 25px rgba(192, 0, 0, 0.1);
+    }
+    .nota-card .candidate-name,
+    .nota-card .candidate-icon {
+      color: var(--mit-red);
+    }
+    
+    /* Style to show a card is disabled (for double-vote fix) */
+    .candidate-card.disabled {
+        pointer-events: none;
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar navbar-expand-lg">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="index.html">
+        <img src="images/mitwpu_logo.png" alt="MIT-WPU Logo">
+        Smart College Election
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="index.html">Home</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link active" aria-current="page" href="vote.html">Vote</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="results.html">Results</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="admin-login.html">Admin</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container my-4">
+
+    <div class="form-card mb-4">
+      <h4 class="page-title mb-3">Step 1: Voter Verification</h4>
+      <div class="row g-3">
+        <div class="col-md-4">
+          <div class="form-floating">
+            <input id="voter_prn" class="form-control" placeholder="Enter your PRN" required>
+            <label for="voter_prn">Enter your PRN</label>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="form-floating">
+            <input id="voter_class" class="form-control" placeholder="Class" required>
+            <label for="voter_class">Class (e.g., MCA)</label>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="form-floating">
+            <input id="voter_div" class="form-control" placeholder="Division" required>
+            <label for="voter_div">Division (e.g., A)</label>
+          </div>
+        </div>
+        <div class="col-md-2">
+          <button id="searchButton" class="btn btn-main w-100 h-100" onclick="loadCandidates()">Search Candidates</button>
+        </div>
+      </div>
+    </div>
+    
+    <div id="alertBox" class="alert text-center" style="display:none;"></div>
+
+    <h4 class="page-title mb-3" id="vote-title" style="display:none;">Step 2: Cast Your Vote</h4>
+    <div id="candidateList" class="row g-4">
+      </div>
+
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+
+  <script>
+    // Variable to prevent double submission
+    let isSubmitting = false;
+
+    // --- Helper function for alerts ---
+    function showAlert(msg, type = "success") {
+      const box = document.getElementById("alertBox");
+      box.innerText = msg;
+      box.className = "alert alert-" + (type === "success" ? "success" : "danger");
+      box.style.display = "block";
+      setTimeout(() => box.style.display = "none", 4000);
+    }
+    
+    // --- Get DOM Elements ---
+    const voterPrnInput = document.getElementById("voter_prn");
+    const voterClassInput = document.getElementById("voter_class");
+    const voterDivInput = document.getElementById("voter_div");
+    const list = document.getElementById("candidateList");
+    const voteTitle = document.getElementById("vote-title");
+    const searchButton = document.getElementById("searchButton");
+
+    async function loadCandidates() {
+      const cls = voterClassInput.value.trim();
+      const div = voterDivInput.value.trim();
+      
+      if (!cls || !div) {
+        showAlert("Please enter both Class and Division to find candidates.", "danger");
+        return;
+      }
+      
+      list.innerHTML = "<h5 class='text-muted'>Loading candidates...</h5>";
+      searchButton.disabled = true; // Disable search button while loading
+      
+      try {
+        // --- CORRECT API PATH ---
+        const res = await fetch(`/api/candidates/${cls}/${div}`);
+        if (!res.ok) {
+          throw new Error("Could not find candidates for this class/division.");
+        }
+        
+        const data = await res.json();
+        list.innerHTML = ""; 
+        
+        if(data.length === 0) {
+            showAlert("No candidates found for your class and division.", "danger");
+            voteTitle.style.display = "none";
+        }
+        
+        voteTitle.style.display = "block"; 
+
+        data.forEach(c => {
+          list.innerHTML += `
+            <div class="col-md-4">
+              <div class="candidate-card text-center" onclick="confirmVote(this, '${c.prn}', '${c.name}')">
+                <i class="bi bi-person-circle candidate-icon"></i>
+                <h5 class="candidate-name mt-2">${c.name}</h5>
+                <p class="candidate-details">${c.studentClass} - ${c.division}</p>
+              </div>
+            </div>`;
+        });
+        
+        // Add NOTA Card
+        list.innerHTML += `
+          <div class="col-md-4">
+            <div class="candidate-card nota-card text-center" onclick="confirmVote(this, 'NOTA', 'None of the Above')">
+              <i class="bi bi-x-circle candidate-icon"></i>
+              <h5 class="candidate-name mt-2">None of the Above</h5>
+              <p class="candidate-details">(NOTA)</p>
+            </div>
+          </div>`;
+          
+      } catch (error) {
+        list.innerHTML = "";
+        showAlert(error.message, "danger");
+      } finally {
+        searchButton.disabled = false; // Re-enable search button
+      }
+    }
+
+    // --- Updated function to accept the card element ---
+    function confirmVote(cardElement, candidatePrn, candidateName) {
+      // Check if a vote is already being submitted
+      if (isSubmitting) return;
+
+      const voterPrn = voterPrnInput.value.trim();
+      if (!voterPrn) {
+        showAlert("Enter your PRN in Step 1 before voting!", "danger");
+        voterPrnInput.focus();
+        return;
+      }
+      
+      const isConfirmed = confirm(`Are you sure you want to vote for: ${candidateName}? \n\nThis action is final.`);
+      
+      if (isConfirmed) {
+        // Disable all cards immediately
+        document.querySelectorAll('.candidate-card').forEach(card => {
+            card.classList.add('disabled');
+        });
+        isSubmitting = true; // Set lock
+        
+        castVote(voterPrn, candidatePrn);
+      }
+    }
+
+    async function castVote(voterPrn, candidatePrn) {
+      try {
+        // --- CORRECT API PATH ---
+        const res = await fetch(`/api/vote/${voterPrn}/${candidatePrn}`, { method:"POST" });
+        const text = await res.text();
+        
+        // This check works with the new VoterController
+        if (!res.ok) {
+          throw new Error(text); // Throws the "Vote failed: ..." message
+        }
+        
+        // Success!
+        showAlert(text, "success");
+        list.innerHTML = `<div class="col-12"><div class="alert alert-success fs-4 text-center">Thank you, your vote has been cast successfully!</div></div>`;
+        voteTitle.style.display = "none";
+        
+        setTimeout(() => {
+           window.location.href = 'results.html';
+        }, 3000);
+        
+      } catch (error) {
+        // This block now catches the "Vote failed" message
+        showAlert(error.message, "danger");
+        
+        // Re-enable buttons if vote failed
+        isSubmitting = false; 
+        document.querySelectorAll('.candidate-card').forEach(card => {
+            card.classList.remove('disabled');
+        });
+      }
+    }
+  </script>
+</body>
+</html>

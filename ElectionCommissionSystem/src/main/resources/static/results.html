@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live Results | MIT-WPU Elections</title>
+  
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+  <style>
+    :root {
+      --mit-blue: #003366;
+      --mit-red: #C00000;
+      --mit-dark-blue: #002244;
+      --text-dark: #343a40;
+      --bg-light: #f8f9fa;
+    }
+    body {
+      background-color: var(--bg-light); 
+      font-family: 'Poppins', sans-serif;
+    }
+    /* --- Reusable Header --- */
+    .navbar {
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      background-color: #ffffff;
+    }
+    .navbar-brand img { height: 40px; margin-right: 10px; }
+    .navbar-brand { font-weight: 600; color: var(--mit-blue); }
+    .nav-link { font-weight: 500; color: var(--mit-blue); }
+    .nav-link:hover { color: var(--mit-red); }
+    .nav-link.active { color: var(--mit-red); font-weight: 600; }
+    
+    /* --- Results Page Specific --- */
+    .page-title { color: var(--mit-blue); font-weight: 600; }
+    .form-card {
+      background: white; padding: 2rem;
+      border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.07);
+    }
+    .table-custom-header { background-color: var(--mit-blue); color: white; }
+    .progress-bar { background-color: var(--mit-blue); }
+    .vote-count { font-weight: 600; color: var(--mit-blue); }
+
+    /* --- Stat Card --- */
+    .stat-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.07);
+      text-align: center;
+    }
+    .stat-card-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #6c757d; /* Muted text */
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+    .stat-card-value {
+      font-size: 2.5rem;
+      font-weight: 600;
+      color: var(--mit-blue);
+    }
+    .stat-card-icon {
+      font-size: 2.5rem;
+      color: var(--mit-blue);
+      opacity: 0.7;
+    }
+    /* This is the green row for the leader */
+    .table-success, .table-success > th, .table-success > td {
+      --bs-table-bg: #e6f7ff; /* A lighter, MIT-blue tint */
+      --bs-table-color: #003366;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar navbar-expand-lg">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="index.html">
+        <img src="images/mitwpu_logo.png" alt="MIT-WPU Logo">
+        Smart College Election
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+          <li class="nav-item"><a class="nav-link" href="vote.html">Vote</a></li>
+          <li class="nav-item"><a class="nav-link active" aria-current="page" href="results.html">Results</a></li>
+          <li class="nav-item"><a class="nav-link" href="admin-login.html">Admin</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container my-4">
+
+    <h2 class="text-center page-title my-4">Live Election Results</h2>
+
+    <div class="row g-4 mb-4">
+      <div class="col-md-6">
+        <div class="stat-card">
+          <div class="row align-items-center">
+            <div class="col-4"><i class="bi bi-people-fill stat-card-icon"></i></div>
+            <div class="col-8 text-start">
+              <div class="stat-card-title">Voter Turnout</div>
+              <div class="stat-card-value" id="turnoutPercentage">--%</div>
+              <small class="text-muted" id="turnoutCount">-- of -- voters</small>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="stat-card">
+          <div class="row align-items-center">
+            <div class="col-4"><i class="bi bi-person-check-fill stat-card-icon"></i></div>
+            <div class="col-8 text-start">
+              <div class="stat-card-title">Total Votes Cast</div>
+              <div class="stat-card-value" id="totalVotesCast">--</div>
+              <small class="text-muted">across all divisions</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <div class="form-card mb-4">
+      <h5 class="page-title mb-3">Filter Results</h5>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="form-floating">
+            <input id="filterClass" class="form-control" placeholder="Class (e.g., MCA)">
+            <label for="filterClass">Class (e.g., MCA)</label>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="form-floating">
+            <input id="filterDiv" class="form-control" placeholder="Division (e.g., A)">
+            <label for="filterDiv">Division (e.g., A)</label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-bordered table-hover align-middle">
+        <thead class="table-custom-header">
+          <tr>
+            <th>Name</th>
+            <th>Class</th>
+            <th>Division</th>
+            <th style="width: 25%;">Votes</th>
+          </tr>
+        </thead>
+        <tbody id="resultsBody">
+          </tbody>
+      </table>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+
+  <script>
+    let allResults = [];
+    let stompClient = null;
+
+    // Get DOM Elements
+    const resultsBody = document.getElementById("resultsBody");
+    const filterClassInput = document.getElementById("filterClass");
+    const filterDivInput = document.getElementById("filterDiv");
+    const turnoutPercentageEl = document.getElementById("turnoutPercentage");
+    const turnoutCountEl = document.getElementById("turnoutCount");
+    const totalVotesCastEl = document.getElementById("totalVotesCast");
+
+    // Main function to render the table
+    function filterAndRender() {
+      const cls = filterClassInput.value.trim().toUpperCase();
+      const div = filterDivInput.value.trim().toUpperCase();
+
+      // Find division leaders
+      const divisionMaxVotes = {};
+      for (const c of allResults) {
+        const key = `${c.studentClass}-${c.division}`;
+        const currentMax = divisionMaxVotes[key] || 0;
+        if (c.voteCount > currentMax) {
+          divisionMaxVotes[key] = c.voteCount;
+        }
+      }
+
+      // Filter and Sort
+      const filtered = allResults.filter(c => 
+        (!cls || c.studentClass.toUpperCase().includes(cls)) && 
+        (!div || c.division.toUpperCase().includes(div))
+      );
+      filtered.sort((a, b) => b.voteCount - a.voteCount);
+      const totalFilteredVotes = filtered.reduce((sum, c) => sum + c.voteCount, 0);
+
+      // Build HTML
+      resultsBody.innerHTML = "";
+      if (filtered.length === 0) {
+        resultsBody.innerHTML = `<tr><td colspan="4" class="text-center text-muted">No results found.</td></tr>`;
+        return;
+      }
+      
+      filtered.forEach(c => {
+        const percentage = (totalFilteredVotes > 0) ? (c.voteCount / totalFilteredVotes) * 100 : 0;
+        const key = `${c.studentClass}-${c.division}`;
+        const maxVotesForDivision = divisionMaxVotes[key];
+        const isLeader = (c.voteCount > 0 && c.voteCount === maxVotesForDivision);
+        const rowClass = isLeader ? "table-success" : ""; 
+
+        resultsBody.innerHTML += `
+          <tr class="${rowClass}">
+            <td>${c.name}</td>
+            <td>${c.studentClass}</td>
+            <td>${c.division}</td>
+            <td>
+              <span class="vote-count">${c.voteCount}</span>
+              <div class="progress" role="progressbar" aria-label="Vote share" aria-valuenow="${percentage}" aria-valuemin="0" aria-valuemax="100" style="height: 8px;">
+                <div class="progress-bar" style="width: ${percentage}%"></div>
+              </div>
+            </td>
+          </tr>`;
+      });
+    }
+    
+    // Function to load dashboard stats
+    async function loadDashboardStats() {
+      try {
+        // Correct API Path
+        const res = await fetch("/api/results/stats"); 
+        if (!res.ok) throw new Error("Stats endpoint not found.");
+        
+        const stats = await res.json();
+        
+        const turnout = (stats.totalVoters > 0) ? (stats.votersWhoVoted / stats.totalVoters) * 100 : 0;
+        
+        turnoutPercentageEl.innerText = `${turnout.toFixed(1)}%`;
+        turnoutCountEl.innerText = `${stats.votersWhoVoted} of ${stats.totalVoters} voters`;
+        totalVotesCastEl.innerText = stats.totalVotesCast; 
+
+      } catch (error) {
+        console.warn("Could not load dashboard stats. Backend API '/api/results/stats' may be missing.");
+        turnoutPercentageEl.innerText = "N/A";
+        turnoutCountEl.innerText = "N/A";
+        totalVotesCastEl.innerText = "N/A";
+      }
+    }
+
+    // Function to connect to WebSocket
+    function connectWebSocket() {
+      const socket = new SockJS('/liveResults'); 
+      stompClient = Stomp.over(socket);
+      stompClient.debug = null; // Turn off console logging
+      stompClient.connect({}, function (frame) {
+        console.log('Connected: ' + frame);
+        // Subscribe to the correct topic
+        stompClient.subscribe('/topic/results', function (message) {
+          console.log("Received new results via WebSocket!");
+          allResults = JSON.parse(message.body);
+          filterAndRender(); 
+          loadDashboardStats(); // Update dashboard on new vote
+        });
+      }, function(error) {
+          console.error("STOMP error: " + error);
+          setTimeout(connectWebSocket, 5000); // Try to reconnect
+      });
+    }
+
+    // Function to get the first set of results on page load
+    async function initialLoad() {
+      try {
+        // Correct API Path
+        const res = await fetch("/api/results");
+        if (!res.ok) throw new Error("Could not fetch initial results.");
+        allResults = await res.json();
+        filterAndRender(); 
+      } catch (error) {
+        console.error(error);
+        resultsBody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Could not load results.</td></tr>`;
+      }
+    }
+
+    // Start everything
+    document.addEventListener("DOMContentLoaded", function() {
+      filterClassInput.addEventListener('input', filterAndRender);
+      filterDivInput.addEventListener('input', filterAndRender);
+      
+      initialLoad(); 
+      loadDashboardStats(); 
+      connectWebSocket();
+    });
+  </script>
+</body>
+</html>
