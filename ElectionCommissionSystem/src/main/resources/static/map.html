@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>🗺️ India Lok Sabha – Winners by Constituency</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  :root{--ink:#0f172a;--pill:#eef3ff}
+  *{box-sizing:border-box} body{margin:0;font-family:Segoe UI,Arial;color:var(--ink)}
+  .nav{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:12px 16px;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.06);position:sticky;top:0;z-index:1000}
+  .brand{font-weight:700} .links a{color:#0b63ff;text-decoration:none;margin:0 6px;padding:8px 12px;background:var(--pill);border-radius:10px}
+  #map{height:calc(100vh - 60px);width:100%}
+  .leaflet-tooltip{font-size:13px}
+  .panel{position:absolute;top:76px;left:10px;z-index:1000;background:rgba(255,255,255,.96);border-radius:10px;padding:10px 12px;box-shadow:0 6px 16px rgba(0,0,0,.15)}
+  .legend{margin-top:8px;max-height:44vh;overflow:auto}
+  .legend-row{display:flex;align-items:center;gap:8px;margin:4px 0}
+  .swatch{width:14px;height:14px;border-radius:3px;border:1px solid #888}
+  .search{display:flex;gap:6px;margin-top:6px}
+  .search input,.search select{padding:6px 8px;border:1px solid #ccc;border-radius:8px;font-size:13px}
+</style>
+</head>
+<body>
+  <div class="nav">
+    <div class="brand">🗳️ Election Commission</div>
+    <div class="links">
+      <a href="admin.html">Admin</a>
+      <a href="vote.html">Vote</a>
+      <a href="results.html">Results</a>
+      <a href="map.html">Map</a>
+    </div>
+  </div>
+
+  <div id="map"></div>
+
+  <div class="panel">
+    <div style="font-weight:700; font-size:14px;">India Lok Sabha – Winners by Constituency</div>
+    <div class="search">
+      <input id="q" placeholder="🔎 Search constituency…" oninput="searchConstituency()" />
+      <select id="stateSel" onchange="filterByState()">
+        <option value="">All States/UTs</option>
+      </select>
+    </div>
+    <div style="font-size:12px; color:#555; margin-top:6px;">
+      Hover a constituency to see: <b>Winner, Party, Votes</b>.
+    </div>
+    <div class="legend" id="legend"></div>
+  </div>
+
+<script>
+  const GEOJSON_URL = '/maps/constituencies.geojson';
+  const RESULTS_API = '/api/results';
+
+  const PARTY_COLORS = {
+    'BJP':'#f39c12','INC':'#2980b9','NCP':'#8e44ad','SS':'#27ae60','AAP':'#16a085',
+    'CPI':'#c0392b','CPM':'#d35400','TMC':'#2ecc71','BSP':'#3498db','SP':'#e67e22',
+    'JD(U)':'#1abc9c','RJD':'#9b59b6','DMK':'#9b59b6','AIADMK':'#2ecc71','YSRCP':'#1abc9c',
+    'BRS':'#8e44ad','TDP':'#f1c40f','SHS':'#e67e22','IND':'#7f8c8d','OTH':'#7f8c8d'
+  };
+  const DEFAULT_COLOR = '#95a5a6';
+
+  const map = L.map('map',{minZoom:3,maxZoom:12}); map.setView([22.5,80.0],5);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png',{attribution:'&copy; OpenStreetMap & Carto'}).addTo(map);
+
+  let geoLayer=null, winnersByConst={}, featuresIndex=[], allStates=new Set();
+
+  async function loadWinners(){
+    const res = await fetch(RESULTS_API); const candidates = await res.json();
+    const grouped = {};
+    candidates.forEach(c => { const k=(c.constituency||'').trim(); if(!k) return; (grouped[k]=grouped[k]||[]).push(c); });
+    Object.keys(grouped).forEach(cons => {
+      const arr = grouped[cons].sort((a,b)=>b.voteCount-a.voteCount);
+      const w = arr[0]; if(w) winnersByConst[norm(cons)] = {name:w.name,party:w.party,votes:w.voteCount};
+    });
+  }
+  const norm = s => (s||'').toString().trim().toLowerCase();
+
+  function getConstName(p){
+    const keys = Object.keys(p), guess=['pc_name','PC_NAME','PC_NAME20','PCNAME','NAME','const_name','CONST_NAME'];
+    for(const k of guess){ if(keys.includes(k)) return p[k]; }
+    const alt = keys.find(k => /pc.*name|const.*name/i.test(k)); return alt ? p[alt] : null;
+  }
+  function getStateName(p){
+    const keys = Object.keys(p), guess=['st_name','STATE','STATE_UT','STATE_NAME','ST_NAME'];
+    for(const k of guess){ if(keys.includes(k)) return p[k]; }
+    const alt = keys.find(k => /state/i.test(k)); return alt ? p[alt] : '';
+  }
+
+  function styleFeature(f){
+    const cons = getConstName(f.properties);
+    const w = winnersByConst[norm(cons)]; const color = PARTY_COLORS[w?.party] || DEFAULT_COLOR;
+    return {color:'#666',weight:0.6,fillColor:color,fillOpacity:0.75};
+  }
+
+  function onEachFeature(f, layer){
+    const cons = getConstName(f.properties) || 'Unknown Constituency';
+    const state = getStateName(f.properties) || '';
+    if(state) allStates.add(state);
+    const w = winnersByConst[norm(cons)]; const party = w?.party || '—'; const name = w?.name || 'No winner yet'; const votes = w?.votes ?? '—';
+    layer.bindTooltip(`<div><b>${cons}</b>${state?`, <i>${state}</i>`:''}<br/>Winner: <b>${name}</b><br/>Party: <b>${party}</b><br/>Votes: <b>${votes}</b></div>`,{sticky:true});
+    layer.on({mouseover:e=>{e.target.setStyle({weight:2,color:'#222'}); e.target.bringToFront();}, mouseout:e=>geoLayer.resetStyle(e.target), click:e=>map.fitBounds(e.target.getBounds(),{maxZoom:9})});
+    featuresIndex.push({cons,state,layer});
+  }
+
+  function buildLegend(){
+    const el=document.getElementById('legend'); el.innerHTML='';
+    Object.entries(PARTY_COLORS).forEach(([party,color])=>{
+      const row=document.createElement('div'); row.className='legend-row';
+      row.innerHTML=`<span class="swatch" style="background:${color}"></span><span>${party}</span>`;
+      el.appendChild(row);
+    });
+  }
+  function buildStateFilter(){
+    const sel=document.getElementById('stateSel'); const arr=Array.from(allStates).filter(Boolean).sort((a,b)=>a.localeCompare(b));
+    arr.forEach(st=>{const opt=document.createElement('option'); opt.value=st; opt.textContent=st; sel.appendChild(opt);});
+  }
+
+  function searchConstituency(){
+    const q = norm(document.getElementById('q').value);
+    const stateVal = document.getElementById('stateSel').value;
+    featuresIndex.forEach(f => {
+      const matchName = !q || norm(f.cons).includes(q);
+      const matchState = !stateVal || f.state === stateVal;
+      const show = matchName && matchState;
+      if(show) f.layer.addTo(map); else map.removeLayer(f.layer);
+    });
+  }
+  function filterByState(){ searchConstituency(); }
+
+  (async function init(){
+    await loadWinners();
+    const resp = await fetch(GEOJSON_URL); const gj = await resp.json();
+    geoLayer = L.geoJSON(gj,{style:styleFeature,onEachFeature:onEachFeature}).addTo(map);
+    buildLegend(); buildStateFilter();
+  })();
+</script>
+</body>
+</html>
