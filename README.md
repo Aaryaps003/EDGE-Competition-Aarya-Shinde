@@ -55,7 +55,7 @@ This application provides a secure admin dashboard to manage the election and a 
 ### 1\. Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/SmartCollegeElection.git
+git clone https://github.com/Aaryaps003/SmartCollegeElection.git
 cd SmartCollegeElection
 ```
 
